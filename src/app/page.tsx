@@ -96,12 +96,18 @@ export default function Home() {
 
   const forecastData = data?.list[0];
 
+  /**
+   * Returns the local date for a given date text and timezone.
+   * @param dateText  The date text to parse.
+   * @param timezone  The timezone offset in seconds.
+   * @returns       The local date.
+   */
+  function getLocalDate(dateText: string, timezone: number): Date {
 
+    // Set offset and parse date text
+    const offsetInSeconds = timezone ?? 396000;
+    const parsedDate = new Date(dateText ?? "");
 
-  function getUpdatedFormattedTime(data: WeatherData | undefined): string {
-    const offsetInSeconds = data?.city.timezone ?? 36000;
-
-    const parsedDate = new Date(data?.list[0].dt_txt ?? "");
     // Apply the offset to get the UTC timestamp
     const utcTimestamp = parsedDate.getTime() + parsedDate.getTimezoneOffset() * 60000;
 
@@ -111,24 +117,11 @@ export default function Home() {
     // Create a new Date object with the local timestamp
     const localDate = new Date(localTimestamp);
 
-    // Add 11 hours to the time
+    // Add offset hours to the time
     localDate.setHours(localDate.getHours() + offsetInSeconds / 3600);
 
-    // Format the updated local date as a string
-    const updatedFormattedTime = formatDate(localDate, "h:mm a");
-
-    return updatedFormattedTime;
+    return localDate;
   }
-
-  console.log("formattedTime: ", getUpdatedFormattedTime(data));
-
-
-
-
-
-
-
-  // const localTime = formatDate(parseISO(data?.list[0].dt_txt ?? ""), "h:mm a")
 
   console.log("data: ", data);
 
@@ -195,42 +188,37 @@ export default function Home() {
 
               {/* Time and weather icons */}
               <div className="flex px-4 gap-10 sm:gap-16 overflow-x-auto w-full justify-between">
-                {data?.list.map((entry, index) => {
-                  {
-                    /* Only map todays data */
-                  }
-                  const entryDate = parseISO(entry.dt_txt);
-                  const isToday = entryDate.getDate() === new Date().getDate();
-                  const isBetween1AMAnd12AM =
-                    entryDate.getHours() >= 1 && entryDate.getHours() <= 24;
-
-                  if (isToday && isBetween1AMAnd12AM) {
+                {data?.list
+                  .filter((entry) => {
+                    // Return entries for today up to 6AM tomorrow
+                    const localDate = getLocalDate(entry.dt_txt, data?.city.timezone);
+                    const entryDate = parseISO(localDate.toISOString());
+                    const now = new Date();
+                    const tomorrow6AM = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 6, 0, 0);
                     return (
-                      <div
-                        key={index}
-                        className="flex flex-col justify-between gap-2 items-center text-xs font-semibold"
-                      >
-                        {/* Weather Icon */}
-                        <WeatherIcon
-                          iconname={getDayOrNightIcon(
-                            entry.weather[0].icon,
-                            entry.dt_txt
-                          )}
-                        />
-
-                        {/* Temperature */}
-                        <span>{entry.main.temp.toFixed(0)} °C</span>
-
-                        {/* Time */}
-                        <p className="whitespace-nowrap">
-                          {formatDate(parseISO(entry.dt_txt), "h:mm a")}
-                        </p>
-                      </div>
+                      entryDate.getDate() === now.getDate() ||
+                      (entryDate > now && entryDate <= tomorrow6AM)
                     );
-                  }
+                  })
+                  .map((entry, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col justify-between gap-2 items-center text-xs font-semibold"
+                    >
+                      {/* Weather Icon */}
+                      <WeatherIcon
+                        iconname={getDayOrNightIcon(entry.weather[0].icon, entry.dt_txt)}
+                      />
 
-                  return null;
-                })}
+                      {/* Temperature */}
+                      <span>{entry.main.temp.toFixed(0)} °C</span>
+
+                      {/* Time */}
+                      <p className="whitespace-nowrap">
+                        {formatDate(getLocalDate(entry.dt_txt, data?.city.timezone), "h:mm a")}
+                      </p>
+                    </div>
+                  ))}
               </div>
             </Container>
           </div>
