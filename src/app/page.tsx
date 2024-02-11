@@ -10,6 +10,7 @@ import { getDayOrNightIcon } from "@/utils/getDayOrNightIcon";
 import WeatherDetails from "./components/WeatherDetails";
 import metersToKilometers from "@/utils/metersToKilometers";
 import { off } from "process";
+import ForecastPanel from "./components/ForecastPanel";
 
 // Current weather for Melbourne (lat/long)
 // https://api.openweathermap.org/data/2.5/weather?lat=-37.813629&lon=144.963058&units=metric&appid=process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY
@@ -123,6 +124,28 @@ export default function Home() {
     return localDate;
   }
 
+  // Get unique dates
+  const uniqueDates = data?.list ? Array.from(new Set(data.list.map((entry) => entry.dt_txt.split(" ")[0]))) : [];
+
+  // For each unique date get the daily details (skip today)
+  const dailyTemperatures = uniqueDates
+    .slice(1) // Skip the first day/today
+    .map((date) => {
+      const entries = data?.list.filter((entry) => entry.dt_txt.split(" ")[0] === date) ?? [];
+      const temps = entries.map((entry) => entry.main.temp);
+      return {
+        date,
+        icon: entries[0].weather[0].icon,
+        description: entries[0].weather[0].description,
+        min: Math.min(...temps),
+        max: Math.max(...temps),
+        sunrise: data?.city.sunrise,
+        sunset: data?.city.sunset,
+      };
+    });
+
+  console.log("uniqueDates: ", uniqueDates);
+  console.log("dailyTemperatures: ", dailyTemperatures);
   console.log("data: ", data);
 
   if (isLoading)
@@ -252,6 +275,22 @@ export default function Home() {
         {/* 5-day Forecast */}
         <section className="flex w-full flex-col gap-4">
           <p className="text-2xl">5-day Forecast</p>
+          {/* <div className="flex gap-4 overflow-x-auto justify-between w-full pr-10"> */}
+            {dailyTemperatures
+              .map((entry, index) => (
+                <ForecastPanel
+                  key={index}
+                  icon={entry.icon}
+                  day={formatDate(parseISO(entry.date), "EEEE")}
+                  date={formatDate(parseISO(entry.date), "d MMMM")}
+                  description={entry.description}
+                  temp_min={entry.min}
+                  temp_max={entry.max}
+                  sunrise={formatDate(fromUnixTime(data?.city.sunrise ?? 0), "h:mm a")}
+                  sunset={formatDate(fromUnixTime(data?.city.sunset ?? 0), "h:mm a")}
+                />
+              ))}
+          {/* </div> */}
         </section>
       </main>
     </div>
