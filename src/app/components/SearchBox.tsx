@@ -6,12 +6,14 @@ type Props = {
   value: string;
   onChange: React.ChangeEventHandler<HTMLInputElement> | undefined;
   onSubmit: React.FormEventHandler<HTMLFormElement> | undefined;
+  suggestions?: string[];
 };
 
 export default function SearchBox(props: Props) {
   return (
     <form className={cn("flex relative items-center justify-center h-10", props.className)}
       onSubmit={props.onSubmit}
+
     >
       <input
         type="text"
