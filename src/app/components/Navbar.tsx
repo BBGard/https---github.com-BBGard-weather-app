@@ -97,8 +97,13 @@ export default function Navbar(props: Props) {
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (postiion) => {
-        const { latitude, longitude } = postiion.coords;
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        console.log("latitude: ", latitude);
+        console.log("longitude: ", longitude);
+        console.log("position: ", position);
+
         try {
           setLoadingCity(true);
           const response = await axios.get(
@@ -116,39 +121,41 @@ export default function Navbar(props: Props) {
   };
 
   return (
-    <nav className="shadow-sm sticky top-0 left-0 z-50 bg-white">
-      <div className="h-[80px] w-full flex justify-between items-center max-w-7xl px-3 mx-auto">
-        <div className="flex items-center justify-center gap-2">
-          <h2 className="text-gray-500 text-3xl">Weather</h2>
-          <FaSun className="text-yellow-300 text-3xl" />
-        </div>
-
-        <section className="flex gap-2 items-center">
-          <FaLocationCrosshairs
-            title="Get Current Location"
-            onClick={handleGetCurrentLocation}
-            className="text-gray-400 text-2xl hover:opacity-80 cursor-pointer"
-          />
-          <FaLocationDot className="text-gray-400 text-2xl" />
-          <p className="text-slate-900/80 text-sm">{props.location}</p>
-          <div className="relative">
-            <SearchBox
-              value={location}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onSubmit={handleSearchSubmit}
-            />
-            <SuggestionBox
-              {...{
-                showSuggestions,
-                suggestions,
-                handleSuggestionClick,
-                error,
-              }}
-            />
+    <>
+      <nav className="shadow-sm sticky top-0 left-0 z-50 bg-white">
+        <div className="h-[80px] w-full flex justify-between items-center max-w-7xl px-3 mx-auto">
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-gray-500 text-3xl">Weather</h2>
+            <FaSun className="text-yellow-300 text-3xl" />
           </div>
-        </section>
-      </div>
-    </nav>
+
+          <section className="flex gap-2 items-center">
+            <FaLocationCrosshairs
+              title="Get Current Location"
+              onClick={handleGetCurrentLocation}
+              className="text-gray-400 text-2xl hover:opacity-80 cursor-pointer"
+            />
+            <FaLocationDot className="text-gray-400 text-2xl" />
+            <p className="text-slate-900/80 text-sm">{props.location}</p>
+            <div className="relative">
+              <SearchBox
+                value={location}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onSubmit={handleSearchSubmit}
+              />
+              <SuggestionBox
+                {...{
+                  showSuggestions,
+                  suggestions,
+                  handleSuggestionClick,
+                  error,
+                }}
+              />
+            </div>
+          </section>
+        </div>
+      </nav>
+    </>
   );
 }
 
@@ -156,16 +163,13 @@ function SuggestionBox({
   showSuggestions,
   suggestions,
   handleSuggestionClick,
-  error
+  error,
 }: {
   showSuggestions: boolean;
   suggestions: string[];
   handleSuggestionClick: (item: string) => void;
   error: string;
 }) {
-
-
-
   return (
     <>
       {((showSuggestions && suggestions.length > 1) || error) && (
